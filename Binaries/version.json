@@ -1,0 +1,6 @@
+{
+  "versionCode": 806,
+  "versionName": "SoftRF-VB008-z6",
+  "apkUrl": "https://github.com/slash-bit/SoftRF-T1000/blob/main/Binaries/SoftRF-VB008-dev.uf2",
+  "notes": "FANET: Cancel SOS message when deactivated, OTA upgrade from SkySignals app"
+}
