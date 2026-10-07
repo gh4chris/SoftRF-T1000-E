@@ -4,31 +4,28 @@
 ![Status](https://img.shields.io/badge/Status-Development-orange)
 ![License](https://img.shields.io/badge/License-GPL--3.0-green)
 
-**SoftRF** is a DIY, multifunctional, compatible, sub-1 GHz ISM band radio based
-proximity awareness system for general aviation. This repository provides the
-documentation and binaries for running **Moshe Braner's SoftRF fork (MB208)** on the
-**Seeed / SenseCap T1000-E**, including **simultaneous FLARM + FANET dual-protocol**
-operation on the LR1110 radio chip — enabling a single device to detect and transmit
-position data in two incompatible RF formats without collision or interference.
+**SoftRF** is a DIY, multifunctional, compatible, sub-1 GHz ISM band radio-based proximity awareness system for general aviation.
+
+This repository documents the use of Moshe Braner's SoftRF MB208 firmware on the **Seeed SenseCAP T1000-E Card Edition**. It provides T1000-E specific installation instructions, bootloader migration procedures, firmware binaries, configuration guidance and operational notes, bringing together information from multiple SoftRF sources into a single device-focused guide.
 
 ## Overview
 
-- **Dual protocol support**: FLARM (FSK @ 868.2 MHz) + FANET (LoRa @ 868.2 MHz)
-- **GPS PPS synchronization**: microsecond-level timing accuracy via the GPS pulse-per-second signal
-- **Fast protocol switching**: ~5–6 ms radio reconfiguration between FSK and LoRa modes
-- **LR1110 optimized**: fast standby mode transitions, minimal SPI overhead
-- **Traffic awareness**: real-time aircraft detection and collision alerts
-- **Multi-format export**: NMEA, GDL90, D1090, JSON, MAVLink output
-- **SenseCap T1000-E Card**: compact, sealed tracker with LR1110 radio, GNSS, BLE and enough flash for IGC flight logging
+- **Dual protocol support**: FLARM-compatible FSK and FANET LoRa operation using time-sliced scheduling on the LR1110 radio
+- **GPS PPS synchronization**: precise RF slot timing for dual-protocol operation; a valid GNSS fix and PPS signal are required
+- **Fast protocol switching**: typically about 5–6 ms radio reconfiguration between FSK and LoRa modes
+- **LR1110 optimized**: fast standby mode transitions and rapid FSK/LoRa reconfiguration
+- **Traffic awareness**: reception and processing of compatible traffic broadcasts, including collision alerts
+- **Multiple output formats**: NMEA, GDL90, D1090, JSON and MAVLink, depending on the firmware configuration and available T1000-E interfaces
+- **SenseCAP T1000-E Card**: compact, sealed tracker with an LR1110 radio, GNSS, BLE and SPI flash storage for flight logs
 
 <img width="391" height="317" alt="SenseCap_T1000E" src="https://github.com/user-attachments/assets/3e919131-ca08-4444-bbb6-4e658738db44" />
 
-Using SoftRF configured for the FLARM-compatible **"Latest"** protocol will:
+When SoftRF is configured for a FLARM-compatible protocol supported by the installed firmware, it can:
 
-* make you visible to FLARMs and other SoftRF devices
-* make you visible to OGN ground stations, thus viewable on websites like <https://glidertracker.org/>
-* make FLARMs and other SoftRF devices visible on your devices such as glide computers
-* generate collision warnings, alone or in conjunction with other devices
+* transmit compatible traffic information to nearby FLARM and SoftRF devices
+* make the aircraft visible to receiving OGN ground stations, subject to protocol coverage and tracking settings <https://glidertracker.org/>
+* receive compatible traffic for output to connected navigation devices
+* generate collision warnings based on received traffic and the selected alarm settings, stand alone or in conjunction with other devices
 
 ## The T1000-E at a glance
 
@@ -37,10 +34,10 @@ Using SoftRF configured for the FLARM-compatible **"Latest"** protocol will:
 | CPU / Radio | nRF52840 with Semtech LR1110 |
 | Edition | "Card Edition" (T-Beam = Prime Mark II, T-Echo = Badge, M1 = Handheld, M3 = Pocket) |
 | Enclosure | sealed — internal battery not accessible, magnetic USB connector |
-| Connectivity | **BLE only** — no WiFi, no UDP/TCP, no secondary serial |
+| Connectivity | **BLE only mode**, USB — no WiFi, no UDP/TCP, no secondary serial |
 | NMEA output | USB (CDC) and/or Bluetooth LE |
 | Display | none — configuration via Configurator, `settings.txt` or NMEA |
-| Flight logging | yes (IGC/IGZ files in flash) |
+| Flight logging | yes (IGC or compressed IGZ files stored in flash) |
 
 > ⚠️ **Important:** A new T1000-E ships with a bootloader that is **not compatible**
 > with SoftRF. The bootloader and SoftDevice must be downgraded (to version 6.1.1)
@@ -57,7 +54,7 @@ All files are in the [`Binaries`](https://github.com/gh4chris/SoftRF-T1000-E/tre
 | File | Purpose |
 |------|---------|
 | [`bootloader_flasher_v3.exe`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/bootloader_flasher_v3.exe) | Bootloader / SoftDevice downgrade tool (Windows) |
-| [`SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2) | SoftRF firmware for the T1000-E (UF2) |
+| [`SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2) | SoftRF bootloader for the T1000-E (UF2) |
 | [`SoftRF.MB208.nRF52.uf2.zip`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/SoftRF.MB208.nRF52.uf2.zip) | SoftRF MB208 firmware, nRF52 (UF2, zipped) |
 
 > ⚠️ The Bootloader Flasher currently runs on **Windows** PCs only.
@@ -100,7 +97,7 @@ Once the bootloader has been downgraded, the T1000-E updates the same way as the
 T-Echo, M1 and M3 (see the
 [nRF52840 instructions](https://github.com/lyusupov/SoftRF/blob/master/software/firmware/binaries/README.md#nrf52840)):
 
-1. Download the new `.uf2` firmware file (e.g. `SoftRF.MB208.nRF52.uf2.zip`, unpacked).
+1. Download the firmware archive, for example `SoftRF.MB208.nRF52.uf2.zip`, and extract the `.uf2` file.
 2. Connect the device via USB — or enter DFU mode by double-tapping the USB cable while
    holding the button, or by sending the NMEA command `$PSRFC,DFU*2F`.
 3. Drag & drop the `.uf2` file onto the `T1000-E` drive. The device installs the firmware
@@ -111,6 +108,8 @@ User settings are preserved when upgrading between compatible firmware versions.
 are not available.)
 
 ### Compiling it yourself
+
+The firmware source code is maintained in Moshe Braner's SoftRF repository; this repository primarily provides T1000-E-specific documentation and prebuilt binaries.
 
 The nRF52 binaries (for T-Echo, M1, M3 and T1000-E) are built with the
 **Adafruit nRF52 board support package version 1.2.0**. Details in the
@@ -151,7 +150,7 @@ following a storage period of more than a couple of weeks.**
 
 ## Configuration
 
-The T1000-E has no WiFi and therefore **no web interface**. Three ways to configure:
+The T1000-E has no Wi-Fi and does not host its own web interface. It can nevertheless be configured through a browser-based external Configurator using Web Bluetooth or Web Serial. Three ways to configure:
 
 1. **Vlad's Configurator** (recommended): open <https://skysignals.app/mysoftrf/> in a
    Web-BLE capable browser (Chrome / Edge) on a phone or laptop, tap **BLE** (or **USB**)
@@ -170,11 +169,11 @@ The T1000-E has no WiFi and therefore **no web interface**. Three ways to config
 | Setting | Recommendation |
 |---|---|
 | Mode | `Normal` |
-| Device ID | fixed per device, always starts with `8`; cannot be changed |
+| Device ID | fixed per device; current T1000-E generated IDs normally start with `8`; cannot be changed |
 | Aircraft ID | your ICAO hex ID if the aircraft is registered; register the ID at <http://ddb.glidernet.org/> so OGN viewers show your registration / contest ID |
 | ID type | `ICAO` or `Device` — the transmitted ID depends on **both** the ID and the ID type! |
 | Protocol | `Latest` = compatible with the new (post-2024) FLARM protocol — recommended. OGNTP and ADS-L are visible to OGN stations but invisible to FLARMs. FANET and PAW are also available; multi-protocol modes are possible (see below) |
-| Region (band) | defaults to *automatic*, set upon first GNSS fix, but only saved for the future if the settings are saved manually. ⚠️ Automatic fails for CN, RU, KR… — set the region manually (EU = 868 MHz, US = 915 MHz) |
+| Region (band) | defaults to *automatic* and is determined after the first GNSS fix; the detected region is only retained if the settings are saved. ⚠️ Verify the selected region, particularly in countries such as CN, RU or KR, and set it manually if required (EU = 868 MHz, US = 915 MHz) |
 | Aircraft type | glider, powered plane, etc. — important for collision avoidance and OGN tracking |
 | Alarm trigger | `Latest` (recommended) — predicts the near-future paths of circling aircraft; automatically falls back to `Vector` (straight lines) or `Distance` when appropriate |
 | Volume | volume of the audible collision warnings |
@@ -203,7 +202,7 @@ Full details in the
 | `relay` | 0 = off, 1 = relay landed-out, 2 = relay all traffic, 3 = relay-only |
 | `pflaa_cs` | 1 (default) include callsign after hex ID in PFLAA sentences |
 | `expire` | seconds to keep reporting traffic not heard from (1–30, default 5) |
-| `altprotocol` | additionally transmit in 1 = OGNTP, 6 = Legacy, 7 = Latest or 8 = ADS-L once every 4 seconds |
+| `altprotocol` | enables periodic transmissions using an additional protocol (1 = OGNTP, 6 = Legacy, 7 = Latest, 8 = ADS-L), depending on the selected operating mode |
 | `flr_adsl` | 1 = simultaneous Latest+ADS-L reception and occasional ADS-L transmissions — recommended in the EU |
 | `nmea_out` / `nmea_out2` | 0 = off, 1 = serial, 2 = UDP, 3 = TCP, 4 = USB, 5 = Bluetooth, 6 = secondary serial — on the T1000-E only **4 (USB)** and **5 (Bluetooth)** are available |
 | `nmea_g` / `nmea_s` / `nmea_t` / `nmea_e` (and `nmea2_*`) | hex bitfields for sentence subtypes: 1 = basic (GGA+RMC / PGRMZ / PFLAA), 2 = GSA / LK8EX1 / PFLAJ, 4 = GST / PFLAM, 8 = GSV / FNNGB, F = all |
@@ -259,7 +258,7 @@ Single protocols:
 
 Time-slicing dual-protocol modes (examples):
 
-* **Latest + FANET** — *the mode used by this project:*
+* **Latest + FANET** — *the default dual-protocol configuration of the MB208 build provided here:*
   slot 0: TX/RX in Latest, slot 1: TX/RX in FANET (RX in Latest every 4 seconds)
 * **Latest + PAW**, **FANET + OGNTP**, **FANET + ADS-L**, **PAW + ADS-L**, **PAW + OGNTP** —
   one protocol per time slot
@@ -267,8 +266,7 @@ Time-slicing dual-protocol modes (examples):
 
 With `flr_adsl=1`, simultaneous Latest+ADS-L dual-mode reception is added, and in the
 FANET+PAW modes SoftRF can even transmit and receive in **four** protocols at once
-(set `expire` to 10+ seconds in that case). The same ID is transmitted in all protocols
-used. The complete table of all combinations is in the
+(set `expire` to 10+ seconds in that case). The configured aircraft identity is used to derive the corresponding identifier for each active protocol. The complete table of all combinations is in the
 [under-the-hood document](https://raw.githubusercontent.com/moshe-braner/SoftRF/refs/heads/master/software/firmware/documentation/SoftRF_MB_under_the_hood.txt).
 
 ### FANET messaging
