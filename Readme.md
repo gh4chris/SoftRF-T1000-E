@@ -51,11 +51,22 @@ When SoftRF is configured for a FLARM-compatible protocol supported by the insta
 
 All files are in the [`Binaries`](https://github.com/gh4chris/SoftRF-T1000-E/tree/main/Binaries) folder:
 
+
 | File | Purpose |
 |------|---------|
 | [`bootloader_flasher_v3.exe`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/bootloader_flasher_v3.exe) | Bootloader / SoftDevice downgrade tool (Windows) |
 | [`SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/SoftRF-firmware-Card_T1000E-1.7-a827d2-VB007-prd.uf2) | SoftRF bootloader for the T1000-E (UF2) |
 | [`SoftRF.MB208.nRF52.uf2.zip`](https://raw.githubusercontent.com/gh4chris/SoftRF-T1000-E/main/Binaries/SoftRF.MB208.nRF52.uf2.zip) | SoftRF MB208 firmware, nRF52 (UF2, zipped) |
+
+### Downloads to the original bootloader files sources
+
+The bootloader fix and eraser can be extracted from [this archive](https://github.com/meshtastic/firmware/releases/download/v2.4.1.394e0e1/firmware-2.4.1.394e0e1.zip):
+
+- `Meshtastic_nRF52_factory_erase_v2.uf2`
+- `firmware-tracker-t1000-e-2.4.1.394e0e1-ota.zip`
+
+For SoftRF functionality based on SoftDevice v6.1.1, follow the [SoftRF instructions](https://github.com/lyusupov/SoftRF/wiki/Card-Edition.-Quick-start) and use [`t1000_e_bootloader-0.9.2_s140_6.1.1.zip`](https://github.com/lyusupov/Adafruit_nRF52_Bootloader/releases/download/0.9.2/t1000_e_bootloader-0.9.2_s140_6.1.1.zip).
+
 
 > ⚠️ The Bootloader Flasher currently runs on **Windows** PCs only.
 
